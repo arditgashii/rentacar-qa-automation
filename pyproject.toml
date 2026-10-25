@@ -48,7 +48,7 @@ ignore_missing_imports = true
 check_untyped_defs = true
 explicit_package_bases = true
 # Test folders mirror the product menu and contain hyphens, so mypy checks the framework code.
-files = ["config", "data", "fixtures", "helpers", "pages", "conftest.py"]
+files = ["config", "data", "fixtures", "helpers", "pages", "plugins", "conftest.py"]
 
 [tool.ruff.lint.per-file-ignores]
 # The docstring of a test is its test case title and stays on one line; data tables stay one row per line.

@@ -5,7 +5,7 @@ from playwright.sync_api import expect
 
 from config.settings import get_settings
 
-pytest_plugins = ["fixtures.api", "fixtures.cleanup"]
+pytest_plugins = ["fixtures.api", "fixtures.cleanup", "plugins.dashboard_reporter"]
 
 expect.set_options(timeout=get_settings().timeout_ms)
 
