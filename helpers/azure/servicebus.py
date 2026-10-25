@@ -12,6 +12,15 @@ from azure.servicebus import ServiceBusClient
 from config.settings import get_settings
 
 
+def _parse(body: str) -> dict[str, Any]:
+    """The topic can hold messages from other producers; anything that is not a JSON object is skipped."""
+    try:
+        event = json.loads(body)
+    except ValueError:
+        return {}
+    return event if isinstance(event, dict) else {}
+
+
 def service_bus_configured() -> bool:
     return bool(get_settings().servicebus_connection_string)
 
@@ -27,7 +36,7 @@ def find_booking_event(booking_id: int, event_type: str) -> dict[str, Any] | Non
                 if not messages:
                     return None
                 for message in messages:
-                    event = json.loads(str(message))
+                    event = _parse(str(message))
                     if event.get("booking_id") == booking_id and event.get("type") == event_type:
                         return event
                 sequence = (messages[-1].sequence_number or 0) + 1
