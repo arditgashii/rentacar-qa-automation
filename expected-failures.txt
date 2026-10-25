@@ -1,0 +1,6 @@
+# Tests that must fail while the platform runs with DRIVENOW_BUGS=on, one per intentional bug.
+# scripts/check_results.py fails the build when the failing set differs from this list in any way.
+TC-005  BUG-001  update car details cuts the price
+TC-006  BUG-004  max_price filter excludes the boundary
+TC-008  BUG-002  overlapping booking is accepted
+TC-009  BUG-003  another client can delete a car
