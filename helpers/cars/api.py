@@ -1,6 +1,5 @@
 """Setup, checks and cleanup of cars through the API."""
 
-from pathlib import Path
 from typing import Any
 
 from data.cars import car_payload
@@ -17,12 +16,6 @@ def get_car_via_api(api: ApiClient, car_id: int) -> dict[str, Any]:
 
 def car_exists(api: ApiClient, car_id: int) -> bool:
     return api.get(f"/cars/{car_id}", expected=None).status_code == 200
-
-
-def upload_photo_via_api(api: ApiClient, car_id: int, path: Path) -> dict[str, Any]:
-    with path.open("rb") as file:
-        files = {"file": (path.name, file, "image/jpeg")}
-        return api.post(f"/cars/{car_id}/photos", files=files, expected=201).json()
 
 
 def search_cars_via_api(api: ApiClient, **filters: Any) -> list[dict[str, Any]]:

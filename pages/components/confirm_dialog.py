@@ -8,7 +8,6 @@ class ConfirmDialog:
         self.root = page.get_by_test_id("confirm-dialog")
         self.message = page.get_by_test_id("confirm-message")
         self.yes = page.get_by_test_id("confirm-yes")
-        self.no = page.get_by_test_id("confirm-no")
 
     def accept(self, expected_text: str = "") -> None:
         expect(self.root, "the confirmation dialog did not open").to_be_visible()

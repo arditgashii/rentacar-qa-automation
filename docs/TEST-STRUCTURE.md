@@ -113,14 +113,14 @@ Never re-implement a login, a confirmation or a flash check inside a test. Use t
 |---|---|
 | `helpers.auth.login.login_as(page, role)` | logs the browser in with the worker's account |
 | `helpers.api.client.api_login(account)`, fixtures `admin_api`, `client_api`, `second_client_api`, `anonymous_api` | REST calls; `expected=` turns a wrong status into a readable failure |
-| `helpers.cars.api` | `create_car_via_api`, `get_car_via_api`, `search_cars_via_api`, `car_exists` |
+| `helpers.cars.api` | `create_car_via_api`, `get_car_via_api`, `search_cars_via_api`, `car_exists`, `delete_car_via_api` |
 | `helpers.bookings.api` | `book_car_via_api` (returns the raw response, so refusals can be checked), `notifications_for_booking` |
 | `helpers.azure.blob`, `helpers.azure.servicebus` | look inside Azurite and peek the Service Bus `audit` subscription |
 | `helpers.data.unique` | `unique_name`, `unique_plate`, `unique_email`, `unique_city` |
 | `helpers.data.wait.wait_until` | wait for an eventually true condition (no `sleep` in tests) |
-| `pages.cars.car_form_page.CarFormPage` | create and edit form: `fill({...})`, `attach_photos`, `save`, `photo_items` |
-| `pages.admin.admin_cars_page.AdminCarsPage` | `search`, `row`, `edit`, `delete` (with the confirmation) |
-| `pages.components.flash.Flash` | `expect_success(text)`, `expect_error(text)` |
+| `pages.cars.car_form_page.CarFormPage` | create and edit form: `fill({...})`, `attach_photos`, `save`, `photo_items`, `main_photo_badge` |
+| `pages.admin.admin_cars_page.AdminCarsPage` | `search`, `row`, `delete` (with the confirmation) |
+| `pages.components.flash.Flash` | `expect_success(text)` |
 
 ## 9. Adding a test
 

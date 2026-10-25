@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from playwright.sync_api import Locator, Page
 
@@ -17,10 +17,8 @@ class CarFormPage(BasePage):
         self.photos_input = self.by_id("car-form-photos")
         self.submit = self.by_id("car-form-submit")
         self.photo_manager = self.by_id("photo-manager")
-        self.primary_badge = self.by_id("photo-primary-badge")
-        self.delete_button = self.by_id("car-delete")
 
-    def open_edit(self, car_id: int) -> "CarFormPage":
+    def open_edit(self, car_id: int) -> Self:
         self.page.goto(f"/cars/{car_id}/edit")
         return self
 
@@ -49,3 +47,7 @@ class CarFormPage(BasePage):
 
     def photo_items(self) -> Locator:
         return self.photo_manager.locator("[data-testid^=photo-item-]")
+
+    def main_photo_badge(self, index: int) -> Locator:
+        """The "Main photo" badge of the photo at this position (it exists on one photo only)."""
+        return self.photo_items().nth(index).get_by_test_id("photo-primary-badge")

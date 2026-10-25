@@ -5,7 +5,7 @@ from pages.components.confirm_dialog import ConfirmDialog
 
 
 class AdminCarsPage(BasePage):
-    """Admin > Cars: every car of every owner, with search, status filter, edit and delete."""
+    """Admin > Cars: every car of every owner, with search and delete."""
 
     path = "/admin/cars"
 
@@ -13,7 +13,6 @@ class AdminCarsPage(BasePage):
         super().__init__(page)
         self.search_input = self.by_id("admin-cars-search")
         self.apply = self.by_id("admin-cars-apply")
-        self.table = self.by_id("admin-cars-table")
         self.empty = self.by_id("admin-cars-empty")
 
     def search(self, text: str) -> None:
@@ -22,9 +21,6 @@ class AdminCarsPage(BasePage):
 
     def row(self, car_id: int) -> Locator:
         return self.by_id(f"admin-cars-row-{car_id}")
-
-    def edit(self, car_id: int) -> None:
-        self.by_id(f"admin-cars-edit-{car_id}").click()
 
     def delete(self, car_id: int) -> None:
         self.by_id(f"admin-cars-delete-{car_id}").click()

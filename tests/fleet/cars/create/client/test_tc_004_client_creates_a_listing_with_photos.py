@@ -45,7 +45,7 @@ def test_tc_004_client_creates_a_listing_with_photos(
 
     with allure.step("the edit page shows the 3 photos, the first one as main photo"):
         expect(form.photo_items(), "wrong number of photos on the edit page").to_have_count(3)
-        expect(form.photo_items().first.get_by_test_id("photo-primary-badge")).to_be_visible()
+        expect(form.main_photo_badge(0), "the first photo should be the main photo").to_be_visible()
 
     with allure.step("the API has the car with the entered values and 3 photos, the first one primary"):
         saved = get_car_via_api(client_api, car_id)
