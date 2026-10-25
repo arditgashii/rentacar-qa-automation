@@ -1,0 +1,117 @@
+# Azure DevOps pipeline: the same as .github/workflows/tests.yml.
+# The platform repository is checked out next to this one as a second repository resource.
+trigger:
+  branches:
+    include: [main]
+
+schedules:
+  - cron: "0 5 * * 1-5"
+    displayName: Weekday morning run
+    branches:
+      include: [main]
+    always: true
+
+parameters:
+  - name: runPerformance
+    displayName: Run the Locust load test
+    type: boolean
+    default: false
+
+resources:
+  repositories:
+    - repository: platform
+      type: github
+      name: arditgashii/rentacar-platform
+      endpoint: github
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  PYTHON_VERSION: "3.12"
+  BASE_URL: http://localhost:8000
+  AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;
+  SERVICEBUS_CONNECTION_STRING: Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+
+stages:
+  - stage: Lint
+    jobs:
+      - job: Lint
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+          - script: pip install -r requirements.txt
+            displayName: Install dependencies
+          - script: ruff check . && ruff format --check . && mypy
+            displayName: Ruff and mypy
+
+  - stage: E2E
+    dependsOn: Lint
+    jobs:
+      - job: E2E
+        strategy:
+          matrix:
+            bugs_on:
+              BUGS: "on"
+              CHECK_FLAGS: ""
+            bugs_off:
+              BUGS: "off"
+              CHECK_FLAGS: "--expect-none"
+        steps:
+          - checkout: self
+            path: s/qa
+          - checkout: platform
+            path: s/platform
+          - script: DRIVENOW_BUGS=$(BUGS) docker compose up -d --build --wait --wait-timeout 300
+            workingDirectory: $(Pipeline.Workspace)/s/platform
+            displayName: Start DriveNow
+          - script: for i in $(seq 1 30); do curl -fsS $(BASE_URL)/health/ready && break; sleep 5; done
+            displayName: Wait until every dependency is ready
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+          - script: pip install -r requirements.txt && playwright install --with-deps chromium
+            workingDirectory: $(Pipeline.Workspace)/s/qa
+            displayName: Install dependencies
+          - script: pytest -n 3 --junitxml=reports/junit.xml --html=reports/report.html --self-contained-html --alluredir=reports/allure-results
+            workingDirectory: $(Pipeline.Workspace)/s/qa
+            displayName: Run the suite
+            continueOnError: true
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: $(Pipeline.Workspace)/s/qa/reports/junit.xml
+              testRunTitle: DriveNow e2e (bugs $(BUGS))
+          - script: python scripts/check_results.py reports/junit.xml $(CHECK_FLAGS)
+            workingDirectory: $(Pipeline.Workspace)/s/qa
+            displayName: Compare with the expected failures
+          - publish: $(Pipeline.Workspace)/s/qa/reports
+            artifact: test-reports-bugs-$(BUGS)
+            condition: always()
+
+  - stage: Performance
+    dependsOn: Lint
+    condition: and(succeeded(), eq('${{ parameters.runPerformance }}', 'true'))
+    jobs:
+      - job: Locust
+        steps:
+          - checkout: self
+            path: s/qa
+          - checkout: platform
+            path: s/platform
+          - script: docker compose up -d --build --wait --wait-timeout 300
+            workingDirectory: $(Pipeline.Workspace)/s/platform
+            displayName: Start DriveNow
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(PYTHON_VERSION)
+          - script: |
+              pip install -r requirements.txt
+              locust -f performance/locustfile.py --headless -u 20 -r 5 -t 1m --host $(BASE_URL) --csv reports/locust
+            workingDirectory: $(Pipeline.Workspace)/s/qa
+            displayName: Locust load test
+          - publish: $(Pipeline.Workspace)/s/qa/reports
+            artifact: locust-results
+            condition: always()

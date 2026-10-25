@@ -1,0 +1,102 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 5 * * 1-5" # every weekday morning
+  workflow_dispatch:
+    inputs:
+      performance:
+        description: Also run the Locust load test
+        type: boolean
+        default: false
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BASE_URL: http://localhost:8000
+  AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;
+  SERVICEBUS_CONNECTION_STRING: Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: ruff check . && ruff format --check .
+      - run: mypy
+
+  e2e:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bugs: ["on", "off"]
+    name: e2e (bugs ${{ matrix.bugs }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: arditgashii/rentacar-platform
+          path: platform
+      - name: Start DriveNow
+        working-directory: platform
+        run: DRIVENOW_BUGS=${{ matrix.bugs }} docker compose up -d --build --wait --wait-timeout 300
+      - name: Wait until every dependency is ready
+        run: for i in $(seq 1 30); do curl -fsS $BASE_URL/health/ready && break; sleep 5; done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt && playwright install --with-deps chromium
+      - name: Run the suite
+        run: >
+          pytest -n 3
+          --junitxml=reports/junit.xml
+          --html=reports/report.html --self-contained-html
+          --alluredir=reports/allure-results
+        continue-on-error: true
+      - name: Compare with the expected failures
+        run: python scripts/check_results.py reports/junit.xml ${{ matrix.bugs == 'off' && '--expect-none' || '' }}
+      - name: Platform logs on failure
+        if: failure()
+        working-directory: platform
+        run: docker compose logs --tail 200
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports-bugs-${{ matrix.bugs }}
+          path: reports/
+
+  performance:
+    if: github.event_name == 'workflow_dispatch' && inputs.performance
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: arditgashii/rentacar-platform
+          path: platform
+      - run: docker compose up -d --build --wait --wait-timeout 300
+        working-directory: platform
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: locust -f performance/locustfile.py --headless -u 20 -r 5 -t 1m --host $BASE_URL --csv reports/locust
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: locust-results
+          path: reports/
