@@ -1,0 +1,54 @@
+[project]
+name = "rentacar-qa-automation"
+version = "1.0.0"
+description = "Python test automation framework (UI, API, Azure integration, performance) for the DriveNow platform"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# importlib lets test folders mirror the product menu (folder names with hyphens, no __init__.py)
+addopts = [
+    "--import-mode=importlib",
+    "--strict-markers",
+    "-p", "no:cacheprovider",
+    "--screenshot=only-on-failure",
+    "--video=retain-on-failure",
+    "--tracing=retain-on-failure",
+    "--output=reports/artifacts",
+]
+markers = [
+    "smoke: short, critical check, runs first",
+    "regression: the full behaviour of a feature",
+    "api: talks to the REST API only",
+    "ui: drives the browser",
+    "integration: also checks an Azure dependency (Blob Storage, Service Bus)",
+    "security: checks an authorization or access rule",
+    "llm: checks the output of the LLM feature",
+    "costly: spends money on an external provider when it is configured (real LLM calls)",
+    "performance: load test, not part of the pytest suite",
+    "admin: acts as an admin",
+    "client: acts as a client",
+    "no_login: happens before anyone logs in",
+    "known_bug(id): fails because of a known product bug (metadata only, the test still fails)",
+]
+filterwarnings = ["ignore::DeprecationWarning:locust.*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "PT"]
+ignore = ["RUF001"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+explicit_package_bases = true
+# Test folders mirror the product menu and contain hyphens, so mypy checks the framework code.
+files = ["config", "data", "fixtures", "helpers", "pages", "conftest.py"]
+
+[tool.ruff.lint.per-file-ignores]
+# The docstring of a test is its test case title and stays on one line; data tables stay one row per line.
+"tests/**" = ["E501"]

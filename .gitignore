@@ -8,3 +8,8 @@ node_modules/
 .idea/
 .vscode/
 *.log
+reports/
+allure-results/
+test-results/
+.ruff_cache/
+.mypy_cache/
