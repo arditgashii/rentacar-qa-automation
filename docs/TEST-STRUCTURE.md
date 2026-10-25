@@ -21,6 +21,7 @@ The tree (roles in brackets are the only role folders that exist):
 tests/
   authentication/
     login/                  [admin]
+    logout/                 [client]
     invalid-login/          [no-login]
     registration/           [no-login]
   fleet/

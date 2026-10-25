@@ -16,6 +16,7 @@ them fail on purpose while DriveNow runs with its [intentional bugs](https://git
 | TC-009 | A client cannot delete another client's car | API | regression, api, security, client | **fails: BUG-003** |
 | TC-010 | Admin deletes a car; it disappears from the list and the API returns 404 | UI + API | regression, ui, admin | pass |
 | TC-011 | Generated description names make, model and year, is at most 600 characters and has no price | API + LLM | regression, api, llm, costly, client | pass |
+| TC-012 | After logout, the browser Back button does not show a private page again | UI | regression, ui, security, client | pass |
 
 ---
 
@@ -131,3 +132,14 @@ SUV at 75.51 and an economy car at 40.00.
 | 3 | Ask again as another client | 403 |
 
 With `LLM_PROVIDER=anthropic` this test calls the real model (marker `costly`); with `mock` it is free.
+
+## TC-012 After logout, Back does not show a private page
+
+Found during exploratory testing: the browser kept My listings in its cache and showed it again after
+logout. Fixed in the platform by sending `Cache-Control: no-store` on every page of a logged-in user.
+
+| # | Step | Expected result |
+|---|---|---|
+| 1 | Log in as a client, open My listings | The page opens |
+| 2 | Log out | "You are logged out." |
+| 3 | Press the browser Back button | The login page (`/login?next=/my/listings`) opens; nothing from the private page is shown |

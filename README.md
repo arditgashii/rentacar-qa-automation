@@ -13,14 +13,14 @@ FAILED TC-005  saved car differs from what the admin entered: daily_price: expec
 FAILED TC-006  search results: expected ['SUV at exactly the max price', 'cheaper SUV'], got ['cheaper SUV']
 FAILED TC-008  an overlapping booking was accepted: expected 409 DATES_TAKEN, got 201
 FAILED TC-009  another client could delete the car: expected 403, got 204 and the car was deleted
-4 failed, 7 passed in 18s   (pytest -n 3)
+4 failed, 8 passed in 20s   (pytest -n 3)
 ```
 
 ## What is in it
 
 | | |
 |---|---|
-| **Tests** | 11 test cases: login, registration, listing with photo upload, update, search, booking, double booking, authorization, delete, LLM output. [docs/TEST-CASES.md](docs/TEST-CASES.md) |
+| **Tests** | 12 test cases: login, logout, registration, listing with photo upload, update, search, booking, double booking, authorization, delete, LLM output. [docs/TEST-CASES.md](docs/TEST-CASES.md) |
 | **Structure** | `tests/<section>/<module>/<feature>/<role>/test_tc_xxx_<slug>.py`, one file per test case, page objects, helpers, fixtures. [docs/TEST-STRUCTURE.md](docs/TEST-STRUCTURE.md) |
 | **UI** | Playwright for Python through `pytest-playwright`, `data-testid` locators, trace, screenshot and video kept on failure |
 | **API** | httpx client that turns an unexpected status into a readable failure |
@@ -100,9 +100,9 @@ with `PublishTestResults` for the JUnit report and a manual Locust stage.
 |---|---|
 | Python, pytest, fixtures, markers, xdist | everything; `conftest.py`, `fixtures/`, `pyproject.toml` |
 | REST API testing | `helpers/api/client.py`, TC-003, TC-006 to TC-009, TC-011 |
-| UI automation (Playwright) | `pages/`, TC-001, TC-002, TC-004, TC-005, TC-010 |
+| UI automation (Playwright) | `pages/`, TC-001, TC-002, TC-004, TC-005, TC-010, TC-012 |
 | Azure Blob Storage and Service Bus | `helpers/azure/`, TC-004, TC-007 |
-| Security and authorization testing | TC-002, TC-003, TC-009, TC-011 |
+| Security and authorization testing | TC-002, TC-003, TC-009, TC-011, TC-012 |
 | Testing an LLM feature | TC-011 |
 | Regression and smoke sets | markers `smoke`, `regression` |
 | Performance testing (Locust) | `performance/locustfile.py` |
