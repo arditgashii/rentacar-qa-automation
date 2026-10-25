@@ -37,6 +37,9 @@ def main() -> int:
     parser.add_argument("--expect-none", action="store_true", help="the platform runs without the bugs")
     args = parser.parse_args()
 
+    if not args.junit.is_file():
+        print(f"NO REPORT: {args.junit} does not exist, so the suite did not run (see the pytest step)")
+        return 1
     expected = {} if args.expect_none else expected_failures()
     failed = failed_tests(args.junit)
     unexpected = sorted(failed - expected.keys())
